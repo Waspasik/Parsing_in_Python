@@ -39,8 +39,6 @@ def create_description(soup):
     result = []
     for x in soup.find_all('div', class_='description'):
         full_description = x.text.strip().split('\n')
-        print(full_description)
-        print()
         description = [desc.split(':')[1].strip() for desc in full_description]
         description[1] = ' '+description[1]
         result.append(description)
@@ -50,8 +48,6 @@ def create_description(soup):
 def write_row_in_file(name, description, price):        
     with open('res.csv', 'a', encoding='utf-8-sig', newline='') as file:
         writer = csv.writer(file, delimiter=';')
-        print(description)
-        print(name)
         for item_name, desc, item_price in zip(name, description, price):
             new_row = item_name, *desc, item_price
             writer.writerow(new_row)
