@@ -21,3 +21,48 @@ with webdriver.Chrome() as browser:
         result += int(browser.find_element(By.ID, 'result').text)
 
 print(result)
+
+
+
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/scroll/2/index.html) с помощью Selenium;
+# На сайте есть 100 чекбоксов, 25 из них вернут число;
+# Ваша задача суммировать все появившиеся числа.
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/scroll/2/index.html')
+    
+    for input in browser.find_elements(By.TAG_NAME, 'input'):
+        ActionChains(browser).move_to_element(input).click().perform()
+    
+    print(sum(int(span.text) for span in browser.find_elements(By.TAG_NAME, 'span') if span.text.isdigit()))
+
+
+
+# Задача:
+
+# Откройте сайт сайт (https://parsinger.ru/scroll/3/) с помощью Selenium;
+# Ваша задача, получить числовое значение  id="число" с каждого тега <input> который при нажатии вернул число;
+# Суммируйте все значения.
+
+from re import findall
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/scroll/3/')
+    
+    for input in browser.find_elements(By.TAG_NAME, 'input'):
+        ActionChains(browser).move_to_element(input).click().perform()
+    
+    print(sum(int(findall(r'\d+', span.get_attribute('id'))[0])
+              for span in browser.find_elements(By.TAG_NAME, 'span')
+              if span.text.isdigit()))
