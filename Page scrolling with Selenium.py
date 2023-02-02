@@ -66,3 +66,73 @@ with webdriver.Chrome() as browser:
     print(sum(int(findall(r'\d+', span.get_attribute('id'))[0])
               for span in browser.find_elements(By.TAG_NAME, 'span')
               if span.text.isdigit()))
+
+    
+    
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/infiniti_scroll_1/) с помощью Selenium;
+# На сайте есть список из 100 элементов, которые генерируются при скроллинге;
+# В списке есть интерактивные элементы, по которым можно осуществить скроллинг вниз;
+# Цель: получить все значение в элементах, сложить их.
+
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+
+
+spans_list = []
+total = 0
+flag = True
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/infiniti_scroll_1/')
+    div = browser.find_element(By.XPATH, '//*[@id="scroll-container"]/div')
+
+    while flag:
+        tags_span = [span for span in browser.find_element(By.ID, 'scroll-container').find_elements(By.TAG_NAME, 'span')]
+        for span in tags_span:
+            if span not in spans_list:
+                spans_list.append(span)
+                print(span.text)
+                total += int(span.text)
+                ActionChains(browser).move_to_element(span).perform()
+            if span.get_attribute('class') == 'last-of-list':
+                flag = False
+    
+    print(total)
+
+
+
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/infiniti_scroll_2/) с помощью Selenium;
+# На сайте есть список из 100 элементов, которые генерируются при скроллинге;
+# В списке есть интерактивные элементы, по которым можно осуществить скроллинг вниз;
+# Используйте Keys.DOWN или .move_to_element();
+# Цель: получить все значение в элементах, сложить их.
+
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+
+
+tags_list = []
+total = 0
+flag = True
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/infiniti_scroll_2/')
+    div = browser.find_element(By.XPATH, '//*[@id="scroll-container"]/div')
+
+    while flag:
+        p_tags = [p for p in browser.find_element(By.ID, 'scroll-container').find_elements(By.TAG_NAME, 'p')]
+        for span in p_tags:
+            if span not in tags_list:
+                tags_list.append(span)
+                total += int(span.text)
+                ActionChains(browser).move_to_element(div).scroll_by_amount(1, 20).perform()
+            if span.get_attribute('class') == 'last-of-list':
+                flag = False
+    
+    print(total)
