@@ -127,12 +127,47 @@ with webdriver.Chrome() as browser:
 
     while flag:
         p_tags = [p for p in browser.find_element(By.ID, 'scroll-container').find_elements(By.TAG_NAME, 'p')]
-        for span in p_tags:
-            if span not in tags_list:
-                tags_list.append(span)
+        for p in p_tags:
+            if p not in tags_list:
+                tags_list.append(p)
                 total += int(span.text)
                 ActionChains(browser).move_to_element(div).scroll_by_amount(1, 20).perform()
             if span.get_attribute('class') == 'last-of-list':
                 flag = False
+    
+    print(total)
+
+    
+    
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/infiniti_scroll_3/) с помощью Selenium 
+# На сайте есть 5 окошек с подгружаемыми элементами, в каждом по 100 элементов;
+# Необходимо прокрутить все окна в самый низ;
+# Цель: получить все значение в каждом из окошек и сложить их.
+
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+
+
+total = 0
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/infiniti_scroll_3/')
+    for i in range(1, 6):
+        div = browser.find_element(By.XPATH, f'//*[@id="scroll-container_{i}"]/div')
+        flag = True
+        tags_list = []
+
+        while flag:
+            span_tags = [span for span in browser.find_element(By.ID, f'scroll-container_{i}').find_elements(By.TAG_NAME, 'span')]
+            for span in span_tags:
+                if span not in tags_list:
+                    tags_list.append(span)
+                    total += int(span.text)
+                    ActionChains(browser).move_to_element(div).scroll_by_amount(1, 20).perform()
+                if span.get_attribute('class') == 'last-of-list':
+                    flag = False
     
     print(total)
