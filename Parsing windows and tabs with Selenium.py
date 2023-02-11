@@ -68,3 +68,21 @@ with webdriver.Chrome() as browser:
         if result.isdigit():
             print(result)
             break
+
+
+            
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/window_size/1/) с помощью selenium;
+# Необходимо открыть окно таким размером, чтобы рабочая область страницы составляла 555px на 555px;
+# Учитывайте размеры границ браузера;
+# Результат появится в id="result".
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+with webdriver.Chrome() as browser:
+    browser.get('http://parsinger.ru/window_size/1/index.html')
+    browser.set_window_size(568, 686)
+    print(browser.find_element(By.ID, 'result').text)
