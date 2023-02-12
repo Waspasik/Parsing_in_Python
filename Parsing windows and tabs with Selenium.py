@@ -86,3 +86,65 @@ with webdriver.Chrome() as browser:
     browser.get('http://parsinger.ru/window_size/1/index.html')
     browser.set_window_size(568, 686)
     print(browser.find_element(By.ID, 'result').text)
+
+    
+    
+# Задача:
+
+# Откройте сайт (https://parsinger.ru/blank/3/index.html) с помощью Selenium;
+# На сайте есть 10 buttons, каждый button откроет сайт в новой вкладке;
+# Каждая вкладка имеет в title уникальное число;
+# Цель - собрать числа с каждой вкладки и суммировать их.
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+total = 0
+
+with webdriver.Chrome() as browser:
+    browser.get('https://parsinger.ru/blank/3/index.html')
+    for button in browser.find_elements(By.CLASS_NAME, 'buttons'):
+        button.click()
+    for tab in browser.window_handles:
+        browser.switch_to.window(tab)
+        if browser.execute_script("return document.title;").isdigit():
+            total += int(browser.execute_script("return document.title;"))
+    print(total)
+
+
+
+# Задача:
+
+# У вас есть список сайтов, 6 шт;
+# На каждом сайте есть chekbox, нажав на этот chekbox появится код;
+# Ваша задача написать скрипт, который открывает при помощи Selenium все сайты во вкладках (.window_handles);
+# Проходит в цикле по каждой вкладке, нажимает на chekbox и сохранеят код;
+# Из каждого числа, необходимо извлечь корень, функцией sqrt();
+# Суммировать получившиеся корни и вставить результат в поле для ответа.
+
+from math import sqrt
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+numbers = []
+sites = ['http://parsinger.ru/blank/1/1.html', 'http://parsinger.ru/blank/1/2.html',
+         'http://parsinger.ru/blank/1/3.html', 'http://parsinger.ru/blank/1/4.html',
+         'http://parsinger.ru/blank/1/5.html', 'http://parsinger.ru/blank/1/6.html',]
+new_tab = 'window.open("{}", "_blank{}");'
+
+with webdriver.Chrome() as browser:
+    for index, url in enumerate(sites):
+        if not index:
+            browser.get(url)
+        else:
+            browser.execute_script(new_tab.format(url, index))
+
+    for window in browser.window_handles:
+        browser.switch_to.window(window)
+        browser.find_element(By.CLASS_NAME, 'checkbox_class').click()
+        numbers.append(int(browser.find_element(By.ID, 'result').text))
+
+    total = sum(map(lambda num: sqrt(num), numbers))
+    print(round(total, 9))
