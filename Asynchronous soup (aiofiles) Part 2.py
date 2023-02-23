@@ -36,8 +36,8 @@ async def main():
         async with session.get(url) as response:
             main_soup = BeautifulSoup(await response.text(), 'lxml')
             links = [schema + a['href'] for a in main_soup.find_all('a')]
-            image_links = []
             for link in links:
+                image_links = []
                 schema2 = 'https://parsinger.ru/asyncio/aiofile/3/depth2/'
                 async with session.get(link) as response2:
                     soup = BeautifulSoup(await response2.text(), 'lxml')
@@ -47,12 +47,12 @@ async def main():
                             soup = BeautifulSoup(await response3.text(), 'lxml')
                             [image_links.append(img['src'])
                              for img in soup.find_all('img')]
-            tasks = []
-            for link in set(image_links):
-                img_name = link.split('/')[-1]
-                task = asyncio.create_task(write_file(session, link, img_name))
-                tasks.append(task)
-            await asyncio.gather(*tasks)
+                tasks = []
+                for link in set(image_links):
+                    img_name = link.split('/')[-1]
+                    task = asyncio.create_task(write_file(session, link, img_name))
+                    tasks.append(task)
+                await asyncio.gather(*tasks)
 
 
 url = 'https://parsinger.ru/asyncio/aiofile/3/index.html'
