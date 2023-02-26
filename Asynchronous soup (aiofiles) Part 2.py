@@ -11,6 +11,8 @@ import aiofiles
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
+from tqdm import tqdm
+from aiohttp_retry import RetryClient, ExponentialRetry
 import os
 
 
@@ -21,41 +23,63 @@ def get_folder_size(filepath, size=0):
     return size
 
 
-async def write_file(session, url, img_name):
+async def download_image(session, url, img_name):
     async with aiofiles.open(f'images/{img_name}', mode='wb') as file:
         async with session.get(url) as response:
-            async for x in response.content.iter_chunked(512):
+            async for x in response.content.iter_chunked(3072):
                 await file.write(x)
-        print(f'Изображение {img_name} сохранено')
+
+
+async def find_images(session, url, pbar):
+    retry_options = ExponentialRetry(attempts=5)
+    retry_client = RetryClient(
+        retry_options=retry_options, client_session=session, start_timeout=0.5)
+
+    async with retry_client.get(url) as response:
+        if response.ok:
+            soup = BeautifulSoup(await response.text(), 'lxml')
+            image_links = [img['src'] for img in soup.find_all('img') if img['src'] not in all_image_links]
+            all_image_links.update([img['src'] for img in soup.find_all('img')])
+            for link in image_links:
+                img_name = link.split('/')[-1]
+                await download_image(session, link, img_name)
+                pbar.update(1)
+
+
+async def get_links(session, url):
+    retry_options = ExponentialRetry(attempts=5)
+    retry_client = RetryClient(retry_options=retry_options, client_session=session, start_timeout=0.5)
+    async with retry_client.get(url) as response:
+        if response.ok:
+            soup = BeautifulSoup(await response.text(), 'lxml')
+            [img_urls.append(schema2 + a['href']) for a in soup.find_all('a')]
 
 
 async def main():
-    schema = 'https://parsinger.ru/asyncio/aiofile/3/'
-
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
+            pbar = tqdm(total=2615, desc='Обработано изображений: ')
             main_soup = BeautifulSoup(await response.text(), 'lxml')
-            links = [schema + a['href'] for a in main_soup.find_all('a')]
-            for link in links:
-                image_links = []
-                schema2 = 'https://parsinger.ru/asyncio/aiofile/3/depth2/'
-                async with session.get(link) as response2:
-                    soup = BeautifulSoup(await response2.text(), 'lxml')
-                    links = [schema2 + a['href'] for a in soup.find_all('a')]
-                    for link in links:
-                        async with session.get(link) as response3:
-                            soup = BeautifulSoup(await response3.text(), 'lxml')
-                            [image_links.append(img['src'])
-                             for img in soup.find_all('img')]
-                tasks = []
-                for link in set(image_links):
-                    img_name = link.split('/')[-1]
-                    task = asyncio.create_task(write_file(session, link, img_name))
-                    tasks.append(task)
-                await asyncio.gather(*tasks)
+            urls = [schema + a['href'] for a in main_soup.find_all('a')]
+
+            urls_tasks = []
+            for link in urls:
+                task = asyncio.create_task(get_links(session, link))
+                urls_tasks.append(task)
+            await asyncio.gather(*urls_tasks)
+
+            download_tasks = []
+            for link in img_urls:
+                task = asyncio.create_task(find_images(session, link, pbar))
+                download_tasks.append(task)
+            await asyncio.gather(*download_tasks)
 
 
 url = 'https://parsinger.ru/asyncio/aiofile/3/index.html'
+schema = 'https://parsinger.ru/asyncio/aiofile/3/'
+schema2 = 'https://parsinger.ru/asyncio/aiofile/3/depth2/'
+img_urls = []
+all_image_links = set()
 
 start = time.perf_counter()
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
